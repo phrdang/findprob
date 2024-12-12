@@ -43,3 +43,4 @@ findprob = "findprob.cli:app"
 
 [tool.hatch.version]
 source = "vcs"
+path = "findprob/__init__.py"
