@@ -1,11 +1,4 @@
-import typer
-
-from .greet import greet
-
-
-app = typer.Typer()
-app.command()(greet)
-
+from .findprob import app
 
 if __name__ == "__main__":
     app()
