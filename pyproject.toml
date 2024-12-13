@@ -35,11 +35,9 @@ classifiers = [
 findprob = "findprob.cli:app"
 
 [project.urls]
-# Homepage = "https://example.com"
-# Documentation = "https://readthedocs.org"
+Homepage = "https://phrdang.github.io/findprob/"
 Repository = "https://github.com/phrdang/findprob.git"
 Issues = "https://github.com/phrdang/findprob/issues"
-# Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
 
 [tool.hatch.version]
 source = "vcs"
