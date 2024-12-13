@@ -25,3 +25,4 @@ findprob search
 6. Install the `findprob` package: `pipx install findprob`
 7. Use the CLI as you would normally, e.g. `findprob <command> <options> <arguments>`
 8. Very jank way to manually test the CLI at the moment: If you make changes you'll have to `pipx uninstall .` and `pipx install .`
+9. Publishing to [PyPi](https://pypi.org/): https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#packaging-your-project
