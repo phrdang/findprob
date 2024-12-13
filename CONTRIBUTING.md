@@ -43,3 +43,15 @@ Do this every time you are publishing a new version of the package:
     2. To TestPyPI: `hatch publish -r test`
 
 See also: [Python Packaging User Guide](https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#packaging-your-project)
+
+## Documentation Website
+
+- Generated using [Jekyll](https://jekyllrb.com/)
+- Deployed with [GitHub Pages](https://pages.github.com/)
+
+To get started:
+
+1. Follow [Jekyll](https://jekyllrb.com/docs/) installation instructions
+2. Go into the documentation folder: `cd docs`
+3. Run `bundle install` to install dependencies
+4. Run `bundle exec jekyll serve` to run preview of website
