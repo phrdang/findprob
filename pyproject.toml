@@ -42,3 +42,9 @@ Issues = "https://github.com/phrdang/findprob/issues"
 [tool.hatch.version]
 source = "vcs"
 path = "findprob/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/docs"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/findprob"]
