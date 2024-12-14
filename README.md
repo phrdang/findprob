@@ -25,4 +25,4 @@ findprob search
 
 ## Credits
 
-A research project created by Rebecca Dang (rdang [at] berkeley [dot] edu), Jessica Lin (linjessica [at] berkeley [dot] edu), and Samantha Huang (samanthahuang [at] berkeley [dot] edu) and advised by Professor Gireeja Ranade (ranade [at] eecs.berkeley [dot] edu) and Professor Narges Norouzi (norouzi [at] berkeley [dot] edu) for CS 194-271 at UC Berkeley (Fall 2024).
+A research project created by Rebecca Dang (rdang [at] berkeley [dot] edu), Jessica Lin (linjessica [at] berkeley [dot] edu), and Samantha Huang (samanthahuang [at] berkeley [dot] edu) and advised by Professor Gireeja Ranade (ranade [at] eecs [dot] berkeley [dot] edu) and Professor Narges Norouzi (norouzi [at] berkeley [dot] edu) for CS 194-271 at UC Berkeley (Fall 2024).
