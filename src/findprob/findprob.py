@@ -57,7 +57,7 @@ def text(
 def classify(
     in_dir: Annotated[str, typer.Argument(help="Problem bank directory")],
     out_file: Annotated[
-        str, typer.Argument(help="Path of output CSV file with classified problems")
+        str, typer.Argument(help="Path of output CSV file with classified problems") # TODO consider switching to JSON? native arrays supported
     ] = "classified_problems.csv",
     vectorstore_dir: Annotated[
         Optional[str],
@@ -88,13 +88,13 @@ def search(
     classify_file: Annotated[
         str,
         typer.Argument(
-            help="CSV file with classified problems (must be in same format as classify command output)"
+            help="CSV file with classified problems (must be in same format as classify command output)" # TODO make this json
         ),
     ],
     out_file: Annotated[
         str,
         typer.Argument(
-            help="Name of output text file containing problem paths that match topic"
+            help="Name of output text file containing problem paths that match topic" # TODO json file
         ),
     ],
     topic: Annotated[str, typer.Argument(help="Name of topic you want to search for")],
