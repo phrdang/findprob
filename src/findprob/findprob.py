@@ -78,6 +78,7 @@ def classify(
     """
     print("classify called")
 
+    # TODO add fewshot mechanism - another command line option?
     # TODO check that all paths exist
     # TODO use model to classify problems and output into csv file with header problem_path, topics
 
