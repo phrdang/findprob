@@ -1,12 +1,21 @@
 from enum import Enum
 
+import os
+
+from rich.progress import track, Progress, SpinnerColumn, TextColumn
+
+from .text_helpers import get_document_loader_from_url, get_document_loader_from_pdf, chunk_documents, save_vectorstore
+
 import typer
 
 from typing import Optional
 from typing_extensions import Annotated
 
 
-app = typer.Typer(help="A CLI to classify and search for problems using LLMs")
+app = typer.Typer(
+    help="A CLI to classify and search for problems using LLMs",
+    pretty_exceptions_show_locals=False, # prevent sensitive info like API keys from being displayed
+)
 
 
 class TextType(str, Enum):
@@ -40,17 +49,43 @@ def text(
     Chunks the textbook of the course to aid in problem classification using Retrieval Augmented Generation (RAG),
     and stores the resulting document chunks in a vectorstore.
     """
-    print("text called")
-
     if chunk_size <= 0:
-        print("chunk_size must be a positive integer")
+        raise ValueError("chunk_size must be a positive integer")
 
     if chunk_overlap < 0:
-        print("chunk_overlap must be a non-negative integer")
+        raise ValueError("chunk_overlap must be a non-negative integer")
+    
+    if text_type == TextType.pdf:
+        if not os.path.exists(source):
+            raise ValueError(f"Textbook source directory {source} does not exist")
 
-    # TODO: if text type is URL, chunk textbook from that URL
-    # TODO: elif text type is PDF, chunk textbook from PDFs (check directory exists)
-    # TODO: save vectorstore to out_dir
+        if len([file_name for file_name in os.listdir(source) if file_name.endswith('.pdf')]) == 0:
+            raise ValueError(f"Textbook source directory {source} is empty or contains no PDFs")
+    
+    if os.path.exists(out_dir):
+        overwrite = typer.confirm(f"{out_dir} already exists. Do you wish to overwrite it?")
+        if not overwrite:
+            raise typer.Abort()
+        print(f'Overwriting contents of {out_dir}')
+    
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
+        if text_type == TextType.url:
+            progress.add_task(description="Chunking textbook from URL...", total=None)
+            textbook_loader = get_document_loader_from_url(source)
+            chunks = chunk_documents(textbook_loader, chunk_size, chunk_overlap)
+        else:
+            progress.add_task(description="Chunking textbook from PDFs...", total=None)
+
+            pdfs = [file_name for file_name in os.listdir(source) if file_name.endswith('.pdf')]
+            chunks = []
+
+            for file_name in pdfs:
+                pdf_doc_loader = get_document_loader_from_pdf(f'{source}/{file_name}')
+                chunks_in_pdf = chunk_documents(pdf_doc_loader, chunk_size, chunk_overlap)
+                chunks.extend(chunks_in_pdf)
+
+        progress.add_task(description=f"Writing {len(chunks)} to {out_dir} directory...", total=None)
+        save_vectorstore(chunks, out_dir)
 
 
 @app.command()

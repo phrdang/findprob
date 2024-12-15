@@ -8,8 +8,15 @@ A CLI to classify and search for problems using LLMs
 2. (Optional) Install autocompletion: `findprob --install-completion`
 3. Create an [OpenAI](https://platform.openai.com/signup) account and generate a new API key.
 4. Create a [LangChain](https://smith.langchain.com/) account and generate a new API key and project.
-5. Create a `.env` file (in the same directory as your problem bank) according to the [`.env-template`](.env-template), or set environment variables through your terminal directly.
-    1. **Make sure you add `.env` to your `.gitignore`! Do not push API keys to GitHub.**
+5. Export the environment variables in your terminal:
+```sh
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+LANGCHAIN_API_KEY=<YOUR API KEY HERE>
+LANGCHAIN_PROJECT=<YOUR PROJECT NAME HERE>
+
+OPENAI_API_KEY=<YOUR API KEY HERE>
+```
 
 ## Usage
 

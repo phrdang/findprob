@@ -10,7 +10,7 @@
 
 ## Development
 
-1. Install the `findprob` package: `pipx install findprob`
+1. Install the `findprob` package: `pipx install .` (you should run this in the root directory of the repo)
 2. Use the CLI as you would normally, e.g. `findprob <command> <options> <arguments>`
 3. Very jank way to manually test the CLI at the moment: If you make changes you'll have to `pipx uninstall .` and `pipx install .`
 

@@ -7,7 +7,21 @@ name = "findprob"
 description = "A CLI that lets you classify and search for problems by topic using an LLM"
 dynamic = ["version"]
 requires-python = ">= 3.11"
-dependencies = ["typer >= 0.12.3"]
+dependencies = [
+    "typer >= 0.12.3",
+
+    "langchain",
+    "langchain-openai",
+    "langchain-community",
+    "langchain-core",
+
+    "faiss-cpu",
+
+    "pypdf",
+    
+    "beautifulsoup4",
+    "lxml",
+]
 authors = [
     {name = "Rebecca Dang", email = "rdang@berkeley.edu"},
     {name = "Jessica Lin", email = "linjessica@berkeley.edu"},
