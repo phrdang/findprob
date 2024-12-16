@@ -43,6 +43,10 @@ Searches for all classified problems tagged with the given topic, and outputs a 
 
 Run `findprob search --help` for information on arguments and options.
 
+## Video Demo
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/uJsmFHBRneI?si=RQyhHptuzp98K7pn" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## Credits
 
 See the [README](https://github.com/phrdang/findprob/blob/main/README.md#credits).
