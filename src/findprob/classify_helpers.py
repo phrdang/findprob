@@ -39,6 +39,24 @@ Only output valid json, and do not include any other information. Respond in the
 """
 
 
+PROMPT_TEMPLATE_NO_TOPICS = """You are an experienced professor in {field} who is an expert at teaching.
+You will be given a problem from a {field} course, and you should be able to identify the topic the problem
+is trying to assess. Here are some sections of the textbook that might be related:
+{context}
+
+Your task is to identify which of the above topics the problem below is trying to assess:
+{input}
+
+Before you give a final answer, you may think about which concepts might be required
+to solve the problem. Afterwards, make a list of the topics that you believe this problem covers. 
+
+Only output valid json, and do not include any other information. Respond in the format below:
+{{
+    "topics": ["topic choice(s) here"]
+}}
+"""
+
+
 def get_vectorstore_retriever(vec_dir, k):
     embeddings = OpenAIEmbeddings()
     vectorstore = FAISS.load_local(
@@ -49,38 +67,28 @@ def get_vectorstore_retriever(vec_dir, k):
     return vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": k})
 
 
-def topics_given_classify(in_dir, field, retriever, topics_file):
-    # setup LLM + RAG
+def get_retrieval_chain(retriever, prompt_template):
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0,
         max_tokens=256,
     )
-    prompt_template = PromptTemplate(
-        template=PROMPT_TEMPLATE_TOPICS_GIVEN,
-        input_variables=["field", "context", "topics", "input"],
-    )
     docs_chain = create_stuff_documents_chain(llm, prompt_template)
-    retrieval_chain = create_retrieval_chain(retriever, docs_chain)
+    return create_retrieval_chain(retriever, docs_chain)
 
-    # read topics file
-    with open(topics_file) as f:
-        topics = f.read()
 
+def run_classifier(retrieval_chain, prompt_vars, in_dir):
     # traverse in_dir and classify problems as you go
     classifications = {}
-    for dir_path, dir_names, file_names in track(os.walk(in_dir)):
+    for dir_path, dir_names, file_names in track(os.walk(in_dir), description='Classifying problems...'):
         for fname in file_names:
             problem_path = os.path.join(dir_path, fname) 
 
             with open(problem_path) as f:
-                problem_text = f.read()
+                problem_text = f.read() # TODO fix_curly_brace?
 
-            response = retrieval_chain.invoke({
-                "field": field,
-                "input": problem_text, # TODO fix_curly_brace?
-                "topics": topics
-            })
+            curr_vars = prompt_vars | { "input": problem_text } # merge dictionaries
+            response = retrieval_chain.invoke(curr_vars)
             answer = response["answer"]
 
             try:
@@ -95,8 +103,32 @@ def topics_given_classify(in_dir, field, retriever, topics_file):
     return classifications
 
 
-def no_topics_classify():
-    pass
+def topics_given_classify(in_dir, field, retriever, topics_file):
+    prompt_template = PromptTemplate(
+        template=PROMPT_TEMPLATE_TOPICS_GIVEN,
+        input_variables=["field", "context", "topics", "input"],
+    )
+    retrieval_chain = get_retrieval_chain(retriever, prompt_template)
+
+    with open(topics_file) as f:
+        topics = f.read()
+
+    prompt_vars = {
+        "field": field, 
+        "topics": topics,
+    }
+    return run_classifier(retrieval_chain, prompt_vars, in_dir)
+
+
+def no_topics_classify(in_dir, field, retriever):
+    prompt_template = PromptTemplate(
+        template=PROMPT_TEMPLATE_NO_TOPICS,
+        input_variables=["field", "context", "input"],
+    )
+    retrieval_chain = get_retrieval_chain(retriever, prompt_template)
+
+    prompt_vars = { "field": field }
+    return run_classifier(retrieval_chain, prompt_vars, in_dir)
 
 
 def feedback_classify():

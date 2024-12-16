@@ -178,3 +178,4 @@ def search(
     print("search called")
 
     # TODO check that all paths exist
+    # TODO case insensitivity
