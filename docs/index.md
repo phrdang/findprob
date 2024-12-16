@@ -11,7 +11,7 @@ See the [README](https://github.com/phrdang/findprob/blob/main/README.md#install
 
 ## Commands
 
-### `text`
+### text
 
 Chunks the textbook of the course to aid in problem classification using Retrieval Augmented Generation (RAG), and stores the resulting document chunks in a vectorstore.
 
@@ -21,7 +21,7 @@ After creating chunks of the textbook, the command creates a [FAISS](https://eng
 
 Run `findprob text --help` for information on arguments and options.
 
-### `classify`
+### classify
 
 Classifies all problems in the problem bank and outputs a JSON file.
 
@@ -37,7 +37,7 @@ The precise prompts for each mode can be found in the [source code](https://gith
 
 Run `findprob classify --help` for information on arguments and options.
 
-### `search`
+### search
 
 Searches for all classified problems tagged with the given topic, and outputs a text file with all problem file paths that match.
 
