@@ -1,14 +1,10 @@
-from enum import Enum
-
-import os
-
-from rich.progress import track, Progress, SpinnerColumn, TextColumn
-
 from .text_helpers import get_document_loader_from_url, get_document_loader_from_pdf, chunk_documents, save_vectorstore
+from .classify_helpers import get_vectorstore_retriever, topics_given_classify, no_topics_classify, feedback_classify, save_classifications
 
+from enum import Enum
+import os
+from rich.progress import Progress, SpinnerColumn, TextColumn
 import typer
-
-from typing import Optional
 from typing_extensions import Annotated
 
 
@@ -21,6 +17,12 @@ app = typer.Typer(
 class TextType(str, Enum):
     url = "url"
     pdf = "pdf"
+
+
+class ClassifyMode(str, Enum):
+    topics_given = "topics-given"
+    no_topics = "no-topics"
+    feedback = "feedback"
 
 
 @app.command()
@@ -90,32 +92,67 @@ def text(
 
 @app.command()
 def classify(
+    field: Annotated[str, typer.Argument(help="The field of study the problems are in")],
     in_dir: Annotated[str, typer.Argument(help="Problem bank directory")],
     out_file: Annotated[
-        str, typer.Argument(help="Path of output CSV file with classified problems") # TODO consider switching to JSON? native arrays supported
-    ] = "classified_problems.csv",
-    vectorstore_dir: Annotated[
-        Optional[str],
-        typer.Option(help="Path to vectorstore directory, if you want to use RAG"),
+        str, typer.Argument(help="Path of output JSON file with classified problems")
+    ],
+    mode: Annotated[
+        ClassifyMode,
+        typer.Argument(help="Classification mode")
+    ],
+    vec_dir: Annotated[
+        str,
+        typer.Argument(help="Path to vectorstore directory"),
+    ],
+    topics: Annotated[
+        str,
+        typer.Option(help="Text file with a topic and description in parentheses on each line"),
     ] = None,
     k: Annotated[
-        Optional[int],
+        int,
         typer.Option(help="Number of document chunks to retrieve for each LLM call"),
-    ] = None,
-    topics_file: Annotated[
-        Optional[str],
-        typer.Option(help="Text file containing list of topics, each on its own line"),
-    ] = None,
+    ] = 1,
 ):
     """
-    Classifies all problems in the problem bank,
-    and outputs a CSV file with the headers problem_path, topics.
+    Classifies all problems in the problem bank and outputs a JSON file.
     """
-    print("classify called")
+    if not os.path.exists(in_dir):
+        raise ValueError(f"Problem bank directory {in_dir} does not exist")
 
+    if os.path.exists(out_file):
+        overwrite = typer.confirm(f"{out_file} already exists. Do you wish to overwrite it?")
+        if not overwrite:
+            raise typer.Abort()
+        print(f'Overwriting contents of {out_file}')
+    
+    if not os.path.exists(vec_dir):
+        raise ValueError(f"Vectorstore directory {vec_dir} does not exist")
+    
+    if mode == ClassifyMode.topics_given or mode == ClassifyMode.feedback:
+        if topics is None:
+            raise ValueError(f"topics option required when using 'topics-given' or 'feedback' mode")
+        
+        if not os.path.exists(topics):
+            raise ValueError(f"Topics file {topics} does not exist")
+
+    if k <= 0:
+        raise ValueError(f"k must be a positive integer")
+    
+    retriever = get_vectorstore_retriever(vec_dir, k)
+
+    if mode == ClassifyMode.topics_given:
+        classifications = topics_given_classify(in_dir, field, retriever, topics)
+    elif mode == ClassifyMode.no_topics:
+        classifications = no_topics_classify(in_dir, field, retriever)
+    else:
+        classifications = feedback_classify(in_dir, field, retriever, topics)
+
+    save_classifications(classifications, out_file)
+
+    # future work:
+    # TODO no rag
     # TODO add fewshot mechanism - another command line option?
-    # TODO check that all paths exist
-    # TODO use model to classify problems and output into csv file with header problem_path, topics
 
 
 @app.command()
