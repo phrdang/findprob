@@ -1,5 +1,16 @@
-from .text_helpers import get_document_loader_from_url, get_document_loader_from_pdf, chunk_documents, save_vectorstore
-from .classify_helpers import get_vectorstore_retriever, topics_given_classify, no_topics_classify, feedback_classify, save_classifications
+from .text_helpers import (
+    get_document_loader_from_url,
+    get_document_loader_from_pdf,
+    chunk_documents,
+    save_vectorstore,
+)
+from .classify_helpers import (
+    get_vectorstore_retriever,
+    topics_given_classify,
+    no_topics_classify,
+    feedback_classify,
+    save_classifications,
+)
 
 from enum import Enum
 import os
@@ -10,7 +21,7 @@ from typing_extensions import Annotated
 
 app = typer.Typer(
     help="A CLI to classify and search for problems using LLMs",
-    pretty_exceptions_show_locals=False, # prevent sensitive info like API keys from being displayed
+    pretty_exceptions_show_locals=False,  # prevent sensitive info like API keys from being displayed
 )
 
 
@@ -56,21 +67,38 @@ def text(
 
     if chunk_overlap < 0:
         raise ValueError("chunk_overlap must be a non-negative integer")
-    
+
     if text_type == TextType.pdf:
         if not os.path.exists(source):
             raise ValueError(f"Textbook source directory {source} does not exist")
 
-        if len([file_name for file_name in os.listdir(source) if file_name.endswith('.pdf')]) == 0:
-            raise ValueError(f"Textbook source directory {source} is empty or contains no PDFs")
-    
+        if (
+            len(
+                [
+                    file_name
+                    for file_name in os.listdir(source)
+                    if file_name.endswith(".pdf")
+                ]
+            )
+            == 0
+        ):
+            raise ValueError(
+                f"Textbook source directory {source} is empty or contains no PDFs"
+            )
+
     if os.path.exists(out_dir):
-        overwrite = typer.confirm(f"{out_dir} already exists. Do you wish to overwrite it?")
+        overwrite = typer.confirm(
+            f"{out_dir} already exists. Do you wish to overwrite it?"
+        )
         if not overwrite:
             raise typer.Abort()
-        print(f'Overwriting contents of {out_dir}')
-    
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
+        print(f"Overwriting contents of {out_dir}")
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
         if text_type == TextType.url:
             progress.add_task(description="Chunking textbook from URL...", total=None)
             textbook_loader = get_document_loader_from_url(source)
@@ -78,36 +106,45 @@ def text(
         else:
             progress.add_task(description="Chunking textbook from PDFs...", total=None)
 
-            pdfs = [file_name for file_name in os.listdir(source) if file_name.endswith('.pdf')]
+            pdfs = [
+                file_name
+                for file_name in os.listdir(source)
+                if file_name.endswith(".pdf")
+            ]
             chunks = []
 
             for file_name in pdfs:
-                pdf_doc_loader = get_document_loader_from_pdf(f'{source}/{file_name}')
-                chunks_in_pdf = chunk_documents(pdf_doc_loader, chunk_size, chunk_overlap)
+                pdf_doc_loader = get_document_loader_from_pdf(f"{source}/{file_name}")
+                chunks_in_pdf = chunk_documents(
+                    pdf_doc_loader, chunk_size, chunk_overlap
+                )
                 chunks.extend(chunks_in_pdf)
 
-        progress.add_task(description=f"Writing {len(chunks)} to {out_dir} directory...", total=None)
+        progress.add_task(
+            description=f"Writing {len(chunks)} to {out_dir} directory...", total=None
+        )
         save_vectorstore(chunks, out_dir)
 
 
 @app.command()
 def classify(
-    field: Annotated[str, typer.Argument(help="The field of study the problems are in")],
+    field: Annotated[
+        str, typer.Argument(help="The field of study the problems are in")
+    ],
     in_dir: Annotated[str, typer.Argument(help="Problem bank directory")],
     out_file: Annotated[
         str, typer.Argument(help="Path of output JSON file with classified problems")
     ],
-    mode: Annotated[
-        ClassifyMode,
-        typer.Argument(help="Classification mode")
-    ],
+    mode: Annotated[ClassifyMode, typer.Argument(help="Classification mode")],
     vec_dir: Annotated[
         str,
         typer.Argument(help="Path to vectorstore directory"),
     ],
     topics: Annotated[
         str,
-        typer.Option(help="Text file with a topic and description in parentheses on each line"),
+        typer.Option(
+            help="Text file with a topic and description in parentheses on each line"
+        ),
     ] = None,
     k: Annotated[
         int,
@@ -121,24 +158,28 @@ def classify(
         raise ValueError(f"Problem bank directory {in_dir} does not exist")
 
     if os.path.exists(out_file):
-        overwrite = typer.confirm(f"{out_file} already exists. Do you wish to overwrite it?")
+        overwrite = typer.confirm(
+            f"{out_file} already exists. Do you wish to overwrite it?"
+        )
         if not overwrite:
             raise typer.Abort()
-        print(f'Overwriting contents of {out_file}')
-    
+        print(f"Overwriting contents of {out_file}")
+
     if not os.path.exists(vec_dir):
         raise ValueError(f"Vectorstore directory {vec_dir} does not exist")
-    
+
     if mode == ClassifyMode.topics_given or mode == ClassifyMode.feedback:
         if topics is None:
-            raise ValueError(f"topics option required when using 'topics-given' or 'feedback' mode")
-        
+            raise ValueError(
+                f"topics option required when using 'topics-given' or 'feedback' mode"
+            )
+
         if not os.path.exists(topics):
             raise ValueError(f"Topics file {topics} does not exist")
 
     if k <= 0:
         raise ValueError(f"k must be a positive integer")
-    
+
     retriever = get_vectorstore_retriever(vec_dir, k)
 
     if mode == ClassifyMode.topics_given:
@@ -150,23 +191,19 @@ def classify(
 
     save_classifications(classifications, out_file)
 
-    # future work:
-    # TODO no rag
-    # TODO add fewshot mechanism - another command line option?
-
 
 @app.command()
 def search(
     classify_file: Annotated[
         str,
         typer.Argument(
-            help="CSV file with classified problems (must be in same format as classify command output)" # TODO make this json
+            help="JSON file with classified problems (must be in same format as classify command output)"
         ),
     ],
     out_file: Annotated[
         str,
         typer.Argument(
-            help="Name of output text file containing problem paths that match topic" # TODO json file
+            help="Name of output text file containing problem paths that match topic"
         ),
     ],
     topic: Annotated[str, typer.Argument(help="Name of topic you want to search for")],

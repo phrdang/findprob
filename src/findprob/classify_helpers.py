@@ -1,4 +1,3 @@
-
 from rich.progress import track
 
 from langchain_community.vectorstores import FAISS
@@ -88,9 +87,7 @@ Only output valid json, and do not include any other information. Respond in the
 def get_vectorstore_retriever(vec_dir, k):
     embeddings = OpenAIEmbeddings()
     vectorstore = FAISS.load_local(
-        vec_dir,
-        embeddings,
-        allow_dangerous_deserialization=True
+        vec_dir, embeddings, allow_dangerous_deserialization=True
     )
     return vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": k})
 
@@ -108,33 +105,35 @@ def get_retrieval_chain(retriever, prompt_template):
 def run_classifier(retrieval_chain, prompt_vars, in_dir):
     # traverse in_dir and classify problems as you go
     classifications = {}
-    for dir_path, dir_names, file_names in track(os.walk(in_dir), description='Classifying problems...'):
+    for dir_path, dir_names, file_names in track(
+        os.walk(in_dir), description="Classifying problems..."
+    ):
         for fname in file_names:
-            problem_path = os.path.join(dir_path, fname) 
+            problem_path = os.path.join(dir_path, fname)
 
             with open(problem_path) as f:
                 problem_text = fix_curly_brace(f.read())
 
-            curr_vars = prompt_vars | { "input": problem_text } # merge dictionaries
+            curr_vars = prompt_vars | {"input": problem_text}  # merge dictionaries
             response = retrieval_chain.invoke(curr_vars)
             answer = response["answer"]
 
             try:
                 answer_json = json.loads(answer)
-                predicted_topics = answer_json['topics']
+                predicted_topics = answer_json["topics"]
             except Exception as e:
                 print(f"Classification for problem {problem_path} errored:", e)
                 predicted_topics = []
-            
+
             classifications[problem_path] = predicted_topics
-    
+
     return classifications
 
 
 def fix_curly_brace(s):
     # If the problem text includes curly braces, it is interpreted as a prompt template variable
     # so we want to replace them with {{ and }}
-    return s.replace('{', '{{').replace('}', '}}')
+    return s.replace("{", "{{").replace("}", "}}")
 
 
 def topics_given_classify(in_dir, field, retriever, topics_file):
@@ -148,7 +147,7 @@ def topics_given_classify(in_dir, field, retriever, topics_file):
         topics = f.read()
 
     prompt_vars = {
-        "field": field, 
+        "field": field,
         "topics": topics,
     }
     return run_classifier(retrieval_chain, prompt_vars, in_dir)
@@ -161,7 +160,7 @@ def no_topics_classify(in_dir, field, retriever):
     )
     retrieval_chain = get_retrieval_chain(retriever, prompt_template)
 
-    prompt_vars = { "field": field }
+    prompt_vars = {"field": field}
     return run_classifier(retrieval_chain, prompt_vars, in_dir)
 
 
@@ -176,12 +175,12 @@ def feedback_classify(in_dir, field, retriever, topics_file):
         topics = f.read()
 
     prompt_vars = {
-        "field": field, 
+        "field": field,
         "topics": topics,
     }
     return run_classifier(retrieval_chain, prompt_vars, in_dir)
 
 
 def save_classifications(classifications, out_file):
-    with open(out_file, 'w') as f:
+    with open(out_file, "w") as f:
         json.dump(classifications, f, indent=4)
