@@ -85,6 +85,25 @@ Only output valid json, and do not include any other information. Respond in the
 """
 
 
+SUPPORTED_FILE_EXTENSIONS = [
+    '.txt',
+    '.tex',
+    '.py',
+    '.sql',
+    '.scm',
+    '.java',
+    '.c',
+    '.go',
+]
+
+
+def is_valid_file(fname):
+    for ext in SUPPORTED_FILE_EXTENSIONS:
+        if fname.endswith(ext):
+            return True
+    return False
+
+
 def get_vectorstore_retriever(vec_dir, k):
     embeddings = OpenAIEmbeddings()
     vectorstore = FAISS.load_local(
@@ -110,24 +129,25 @@ def run_classifier(retrieval_chain, prompt_vars, in_dir):
         os.walk(in_dir), description="Classifying problems..."
     ):
         for fname in file_names:
-            problem_path = os.path.join(dir_path, fname)
+            if is_valid_file(fname):
+                problem_path = os.path.join(dir_path, fname)
 
-            with open(problem_path) as f:
-                problem_text = fix_curly_brace(f.read())
+                with open(problem_path) as f:
+                    problem_text = fix_curly_brace(f.read())
 
-            curr_vars = prompt_vars | {"input": problem_text}  # merge dictionaries
-            response = retrieval_chain.invoke(curr_vars)
-            answer = response["answer"]
+                curr_vars = prompt_vars | {"input": problem_text}  # merge dictionaries
+                response = retrieval_chain.invoke(curr_vars)
+                answer = response["answer"]
 
-            try:
-                answer_json = json.loads(answer)
-                predicted_topics = answer_json["topics"]
-            except Exception as e:
-                print(f"[orange]Classification for problem {problem_path} errored, setting topics to empty array. Stack trace below:[/orange]")
-                print(e)
-                predicted_topics = []
+                try:
+                    answer_json = json.loads(answer)
+                    predicted_topics = answer_json["topics"]
+                except Exception as e:
+                    print(f"[orange]Classification for problem {problem_path} errored, setting topics to empty array. Stack trace below:[/orange]")
+                    print(e)
+                    predicted_topics = []
 
-            classifications[problem_path] = predicted_topics
+                classifications[problem_path] = predicted_topics
 
     return classifications
 

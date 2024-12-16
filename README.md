@@ -20,16 +20,17 @@ OPENAI_API_KEY=<YOUR API KEY HERE>
 
 ## Usage
 
-Run `findprob --help` for information.
-
-Available commands:
-
-```sh
-findprob text
-findprob classify
-findprob search
-```
+See the [official docs](https://phrdang.github.io/findprob/) or run `findprob --help` for more information.
 
 ## Credits
 
-A research project created by Rebecca Dang (rdang [at] berkeley [dot] edu), Jessica Lin (linjessica [at] berkeley [dot] edu), and Samantha Huang (samanthahuang [at] berkeley [dot] edu) and advised by Professor Gireeja Ranade (ranade [at] eecs [dot] berkeley [dot] edu) and Professor Narges Norouzi (norouzi [at] berkeley [dot] edu) for CS 194-271 at UC Berkeley (Fall 2024).
+A research project for CS 194-271 at UC Berkeley (Fall 2024) created by:
+
+- Rebecca Dang (rdang [at] berkeley [dot] edu)
+- Jessica Lin (linjessica [at] berkeley [dot] edu)
+- Samantha Huang (samanthahuang [at] berkeley [dot] edu)
+
+Advised by:
+
+- Professor Gireeja Ranade (ranade [at] eecs [dot] berkeley [dot] edu)
+- Professor Narges Norouzi (norouzi [at] berkeley [dot] edu)

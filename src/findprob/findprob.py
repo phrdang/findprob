@@ -123,7 +123,7 @@ def text(
                 chunks.extend(chunks_in_pdf)
 
         progress.add_task(
-            description=f"Writing {len(chunks)} to {out_dir} directory...", total=None
+            description=f"Writing {len(chunks)} chunks to {out_dir} directory...", total=None
         )
         save_vectorstore(chunks, out_dir)
 
