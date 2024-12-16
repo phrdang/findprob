@@ -1,4 +1,5 @@
 from rich.progress import track
+from rich import print
 
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -122,7 +123,8 @@ def run_classifier(retrieval_chain, prompt_vars, in_dir):
                 answer_json = json.loads(answer)
                 predicted_topics = answer_json["topics"]
             except Exception as e:
-                print(f"Classification for problem {problem_path} errored:", e)
+                print(f"[orange]Classification for problem {problem_path} errored, setting topics to empty array. Stack trace below:[/orange]")
+                print(e)
                 predicted_topics = []
 
             classifications[problem_path] = predicted_topics

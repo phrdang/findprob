@@ -17,7 +17,9 @@ import os
 from rich.progress import Progress, SpinnerColumn, TextColumn
 import typer
 from typing_extensions import Annotated
-
+import json
+from rich.progress import track
+from rich import print
 
 app = typer.Typer(
     help="A CLI to classify and search for problems using LLMs",
@@ -92,7 +94,7 @@ def text(
         )
         if not overwrite:
             raise typer.Abort()
-        print(f"Overwriting contents of {out_dir}")
+        print(f"[bold red]Overwriting contents of {out_dir}[/bold red]")
 
     with Progress(
         SpinnerColumn(),
@@ -163,7 +165,7 @@ def classify(
         )
         if not overwrite:
             raise typer.Abort()
-        print(f"Overwriting contents of {out_file}")
+        print(f"[bold red]Overwriting contents of {out_file}[/bold red]")
 
     if not os.path.exists(vec_dir):
         raise ValueError(f"Vectorstore directory {vec_dir} does not exist")
@@ -206,13 +208,64 @@ def search(
             help="Name of output text file containing problem paths that match topic"
         ),
     ],
-    topic: Annotated[str, typer.Argument(help="Name of topic you want to search for")],
+    topics: Annotated[
+        str,
+        typer.Argument(
+            help="Name(s) of topic you want to search for, separated by commas"
+        ),
+    ],
+    case_sensitive: Annotated[
+        bool, typer.Option(help="Turn on case sensitivity for topic names")
+    ] = False,
+    match_all: Annotated[
+        bool,
+        typer.Option(
+            help="Turn on matching on all of the topics given, rather than any of the topics"
+        ),
+    ] = False,
 ):
     """
     Searches for all classified problems tagged with the given topic,
     and outputs a text file with all problem file paths that match.
     """
-    print("search called")
+    if not os.path.exists(classify_file):
+        raise ValueError(f"Classify file {classify_file} does not exist")
 
-    # TODO check that all paths exist
-    # TODO case insensitivity
+    if os.path.exists(out_file):
+        overwrite = typer.confirm(
+            f"{out_file} already exists. Do you wish to overwrite it?"
+        )
+        if not overwrite:
+            raise typer.Abort()
+        print(f"[bold red]Overwriting contents of {out_file}[/bold red]")
+
+    with open(classify_file, "r") as f:
+        classifications = json.load(f)
+
+    if case_sensitive:
+        topics = set([t.strip() for t in topics.split(",")])
+    else:
+        topics = set([t.strip().lower() for t in topics.split(",")])
+
+    matches = []
+    for problem_path, predicted_topics in track(
+        classifications.items(), description="Searching for problems..."
+    ):
+        if case_sensitive:
+            predicted_topics = set([t.strip() for t in predicted_topics])
+        else:
+            predicted_topics = set([t.strip().lower() for t in predicted_topics])
+
+        if match_all and topics.issubset(predicted_topics):
+            matches.append(problem_path)
+        elif not match_all and not topics.isdisjoint(predicted_topics):
+            matches.append(problem_path)
+
+    if len(matches) == 0:
+        print("[bold red] Warning: 0 matches found[/bold red]")
+    else:
+        print(f"[green]{len(matches)} found[/green]")
+
+    with open(out_file, "w") as f:
+        for match in matches:
+            f.write(match + "\n")
